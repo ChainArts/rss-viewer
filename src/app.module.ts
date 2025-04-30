@@ -1,16 +1,26 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { CategoriesController } from './categories/categories.controller';
-import { ArticlesController } from './articles/articles.controller';
-import { FeedsController } from './feeds/feeds.controller';
-import { FeedsService } from './feeds/feeds.service';
-import { ArticlesService } from './articles/articles.service';
-import { CategoriesService } from './categories/categories.service';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import databaseConfig from 'src/feature/database.config';
+import { NewsModule } from 'src/feature/news/news.module';
+import { DataSourceOptions } from 'typeorm';
 
 @Module({
-  imports: [],
-  controllers: [AppController, CategoriesController, ArticlesController, FeedsController],
-  providers: [AppService, FeedsService, ArticlesService, CategoriesService],
+  imports: [
+    ConfigModule.forRoot({
+      load: [
+        databaseConfig
+      ],
+    }),
+    NewsModule,
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        ...config.get<Partial<DataSourceOptions>>('database'),
+        autoLoadEntities: true,
+      }),
+    })
+  ],
 })
 export class AppModule {}
